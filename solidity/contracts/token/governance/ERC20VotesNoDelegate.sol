@@ -50,14 +50,14 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     /**
     * @dev All proposals
     */
-    uint[] public proposals;
+    bytes32[] public proposals;
 
     /**
     * @dev Vote for a proposal
     * @param proposal is the proposal id
     * @param option is the option to vote (e.g. endorse, oppose, etc.)
     */
-    function vote(uint proposal, uint8 option) public {
+    function vote(bytes32 proposal, uint8 option) public {
         require(uint32(proposal) > block.timestamp); // Proposal is valid for voting
         uint256 voting_power = getVotes(msg.sender);
         Vote v(msg.sender, voting_power, option);
@@ -77,7 +77,7 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     * which is keccak256[(32 proposal id) (160 executor addr) (4*8 revenue share) (bytes4(keccak256(abi.encode(block.timestamp, executor addr)))) + url] + 32 end_time,
     * where url is the Arweave url.
     */
-    function addProposal(byte32 proposal) public {
+    function addProposal(bytes32 proposal) public {
         proposals.push(proposal);
     }
 }
