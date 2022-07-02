@@ -34,31 +34,9 @@ import "@openzeppelin/contracts/Context.sol";
  * allowances. See {IERC20-approve}.
  */
 contract ERC20CarbonDAO is ERC20, Pausable {
-    mapping(address => uint256) private _balances;
-
-    mapping(address => mapping(address => uint256)) private _allowances;
-
-    uint256 private _totalSupply;
-
-    string private _name;
-    string private _symbol;
 
     address public SbtAddress;
     UserSBT public SbtContract;
-
-    /**
-     * @dev Sets the values for {name} and {symbol}.
-     *
-     * The default value of {decimals} is 18. To select a different value for
-     * {decimals} you should overload it.
-     *
-     * All two of these values are immutable: they can only be set once during
-     * construction.
-     */
-    constructor(string memory name_, string memory symbol_) {
-        _name = name_;
-        _symbol = symbol_;
-    }
 
     /**
      * @dev Require the to address is valid,
