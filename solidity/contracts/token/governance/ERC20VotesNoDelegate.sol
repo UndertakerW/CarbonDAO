@@ -79,6 +79,6 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     */
     function addProposal(bytes32 proposal) public {
         require(proposals[proposal] == false, "Proposal already exists.");
-        proposals.push(proposal);
+        proposals[proposal] = true;
     }
 }
