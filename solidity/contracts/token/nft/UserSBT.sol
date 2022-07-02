@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/SignatureCheckerUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "../governance/ERC20VotesNoDelegate.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 
-contract UserSBT is ERC721Upgradeable, PausableUpgradeable {
+contract UserSBT is ERC721, Pausable, Ownable {
     address governanceToken;
     struct VoteInformation {
         uint32 endtime; //end time
@@ -17,10 +18,8 @@ contract UserSBT is ERC721Upgradeable, PausableUpgradeable {
         bytes4 proposer; // bytes4(address(proposer))
         string url;
     }
-    function initialize() initializer public {
-        __ERC721_init("MyCollectible", "MCO");
-    }
 
+    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_){}
     
 
     function transferFrom(
@@ -33,6 +32,10 @@ contract UserSBT is ERC721Upgradeable, PausableUpgradeable {
 
         _transfer(from, to, tokenId);
     }
+
+    function setGovernanceToken(address _token) public onlyOwner {
+        governanceToken = _token;
+    }
     
 
     
@@ -43,19 +46,20 @@ contract UserSBT is ERC721Upgradeable, PausableUpgradeable {
 // url
 // calldata
 
-    // function createProposal(VoteInformation calldata info, address result_executor) public returns(bool) {
-    //     bytes32 proposalId = (getProposalHash(info, uint32(block.timestamp))<<224 | bytes4(info.endtime));
-    //     //ERC20VotesNoDelegate(governanceToken).addProposal(proposalId, result_executor);
-    // }
+    function createProposal(VoteInformation calldata info, address result_executor) public returns(bytes32) {
+        bytes32 proposalId = (getProposalHash(info, uint32(block.timestamp))<<224 | bytes4(info.endtime));
+        ERC20VotesNoDelegate(governanceToken).addProposal(proposalId, result_executor);
+        return proposalId;
+    }
 
-    // function getProposalHash(VoteInformation calldata info, uint32 startTime) internal returns(bytes32) {
-    //     return keccak256(abi.encode(info.receiver, info.ratio, info.proposer, info.url, startTime));
-    // }
+    function getProposalHash(VoteInformation calldata info, uint32 startTime) internal pure returns(bytes32) {
+        return keccak256(abi.encode(info.receiver, info.ratio, info.proposer, info.url, startTime));
+    }
 
-    // function checkProposalHash(bytes32 hash, VoteInformation calldata info, uint32 startTime) public returns(bool) {
-    //     if(hash == (getProposalHash(info, startTime) << 224 | bytes4(info.endtime))) {
-    //         return true;
-    //     }
-    //     return false;
-    // }
+    function checkProposalHash(bytes32 hash, VoteInformation calldata info, uint32 startTime) public pure returns(bool) {
+        if(hash == (getProposalHash(info, startTime) << 224 | bytes4(info.endtime))) {
+            return true;
+        }
+        return false;
+    }
 }

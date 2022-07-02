@@ -28,8 +28,14 @@ import "../nft/UserSBT.sol";
  */
 
 contract ERC20CarbonDAO is Ownable, ERC20{
-    // //address public SbtAddress;
+
     UserSBT public SbtContract;
+
+    /**
+    * @dev Control transactions
+    * When paused is true, transaction is not allowed
+    */
+    bool public paused;
 
     constructor(string memory name_, string memory symbol_) ERC20(name_,symbol_) {
     }
@@ -43,13 +49,26 @@ contract ERC20CarbonDAO is Ownable, ERC20{
         _;
     }
 
-    // modifier onlyUser(address sender) {
-    //     require(SbtContract.balanceOf(sender) > 0);
-    //     _;
-    // }
+    /**
+     * @dev Require the contract is not paused.
+     */
+    modifier requireNotPaused() {
+        require(!paused, "Not allowed!");
+        _;
+    }
 
-    function setSbtAddress(address addr) public onlyOwner {
+    /**
+     * @dev Set the contract address of the SBT
+     */
+    function setSbtAddress(address addr) external onlyOwner {
         SbtContract = UserSBT(addr);
+    }
+
+    /**
+     * @dev Set the paused variable
+     */
+    function setPaused(bool new_paused) external onlyOwner {
+        paused = new_paused;
     }
 
     /**
@@ -60,7 +79,7 @@ contract ERC20CarbonDAO is Ownable, ERC20{
      * - `to` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address to, uint256 amount) public override hasNft(to) returns (bool)  {
+    function transfer(address to, uint256 amount) public override hasNft(to) requireNotPaused returns (bool)  {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -76,10 +95,14 @@ contract ERC20CarbonDAO is Ownable, ERC20{
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public override hasNft(spender) returns (bool) {
+    function approve(address spender, uint256 amount) public override hasNft(spender) requireNotPaused returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
+    }
+
+    function assign(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
     }
 
 }
