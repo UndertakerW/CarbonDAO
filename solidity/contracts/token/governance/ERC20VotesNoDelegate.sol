@@ -45,7 +45,7 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     * The first mapping maps a proposal id to the second mapping
     * The second mapping maps an address to its ballot
     */
-    mapping(uint => mapping(address => Vote)) public votes;
+    mapping(bytes32 => mapping(address => Vote)) public votes;
 
     /**
     * @dev All proposals
