@@ -50,7 +50,7 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     /**
     * @dev All proposals
     */
-    bytes32[] public proposals;
+    mapping(bytes32 => bool) public proposals;
 
     /**
     * @dev Vote for a proposal
@@ -78,6 +78,7 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     * where url is the Arweave url.
     */
     function addProposal(bytes32 proposal) public {
+        require(proposals[proposal] == false, "Proposal already exists.");
         proposals.push(proposal);
     }
 }
