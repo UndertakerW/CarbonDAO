@@ -74,7 +74,7 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     /**
     * @dev Add a proposal
     * @param proposal is the hash of the proposal,
-    * which is keccak256[(32 proposal id) (160 executor addr) (4*8 revenue share) (bytes4(keccak256(abi.encode(block.timestamp, executor addr)))) + url] + 32 end_time,
+    * which is keccak256[(32 block.timestamp) (160 executor addr) (4*8 revenue share) (bytes4(keccak256(abi.encode(executor addr)))) + url] + 32 end_time,
     * where url is the Arweave url.
     */
     function addProposal(bytes32 proposal) public {
