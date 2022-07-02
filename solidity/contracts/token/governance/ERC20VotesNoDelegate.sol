@@ -62,6 +62,6 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     * @dev Gets the current votes balance for `account`
     */
     function getVotes(address account) public view virtual override returns (uint256) {
-        return balanceOf(delegator);
+        return balanceOf(account);
     }
 }
