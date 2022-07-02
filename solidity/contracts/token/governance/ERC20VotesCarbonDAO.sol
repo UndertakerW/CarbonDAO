@@ -46,8 +46,14 @@ abstract contract ERC20VotesCarbonDAO is ERC20Votes {
     */
     mapping(uint => mapping(address => Vote)) public votes;
 
+    /**
+    * @dev Vote for a proposal
+    * @param proposal is the proposal id
+    * @param option is the option to vote (e.g. endorse, oppose, etc.)
+    */
     function vote(uint proposal, uint8 option) public {
-        Vote v(msg.sender, getVotes(msg.sender), option);
+        uint256 voting_power = getVotes(msg.sender);
+        Vote v(msg.sender, voting_power, option);
         votes[proposal][msg.sender] = v;
     }
 }
