@@ -3,11 +3,11 @@
 
 pragma solidity ^0.8.0;
 
-import "./draft-ERC20Permit.sol";
-import "../../../utils/math/Math.sol";
-import "../../../governance/utils/IVotes.sol";
-import "../../../utils/math/SafeCast.sol";
-import "../../../utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /**
  * @dev Extension of ERC20 to support Compound-like voting and delegation. This version is more generic than Compound's,

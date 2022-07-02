@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.0;
 
-import "./IERC20.sol";
-import "./extensions/IERC20Metadata.sol";
-import "../../utils/Context.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/Context.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -237,8 +237,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
         unchecked {
             _balances[from] = fromBalance - amount;
+            // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
+            // decrementing then incrementing.
+            _balances[to] += amount;
         }
-        _balances[to] += amount;
 
         emit Transfer(from, to, amount);
 
@@ -260,7 +262,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         _beforeTokenTransfer(address(0), account, amount);
 
         _totalSupply += amount;
-        _balances[account] += amount;
+        unchecked {
+            // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
+            _balances[account] += amount;
+        }
         emit Transfer(address(0), account, amount);
 
         _afterTokenTransfer(address(0), account, amount);
@@ -286,8 +291,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
         unchecked {
             _balances[account] = accountBalance - amount;
+            // Overflow not possible: amount <= accountBalance <= totalSupply.
+            _totalSupply -= amount;
         }
-        _totalSupply -= amount;
 
         emit Transfer(account, address(0), amount);
 
