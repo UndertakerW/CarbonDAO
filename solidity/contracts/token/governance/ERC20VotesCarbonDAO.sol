@@ -24,18 +24,25 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  *
  * _Available since v4.2._
  */
-abstract contract ERC20Votes is IVotes, ERC20Permit {
+abstract contract ERC20VotesCarbonDAO is ERC20Votes {
     struct Checkpoint {
         uint32 fromBlock;
         uint224 votes;
     }
+
+    struct Vote {
+
+    };
 
     bytes32 private constant _DELEGATION_TYPEHASH =
         keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
 
     mapping(address => address) private _delegates;
     mapping(address => Checkpoint[]) private _checkpoints;
+    mapping(uint => address) private _votes;
     Checkpoint[] private _totalSupplyCheckpoints;
+
+
 
     /**
      * @dev Get the `pos`-th checkpoint for `account`.
