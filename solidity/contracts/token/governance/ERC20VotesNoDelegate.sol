@@ -3,12 +3,13 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "./ERC20CarbonDAO.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "../nft/UserSBT.sol";
 
 /**
  * @dev Extension of ERC20 to support Compound-like voting and delegation. This version is more generic than Compound's,
@@ -25,7 +26,68 @@ import "./ERC20CarbonDAO.sol";
  *
  * _Available since v4.2._
  */
-abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
+
+contract ERC20CarbonDAO is Ownable, ERC20{
+    // //address public SbtAddress;
+    UserSBT public SbtContract;
+
+    constructor(string memory name_, string memory symbol_) ERC20(name_,symbol_) {
+    }
+
+    /**
+     * @dev Require the to address is valid,
+     * which means it has an NFT.
+     */
+    modifier hasNft(address to) {
+        require(SbtContract.balanceOf(to) > 0);
+        _;
+    }
+
+    // modifier onlyUser(address sender) {
+    //     require(SbtContract.balanceOf(sender) > 0);
+    //     _;
+    // }
+
+    function setSbtAddress(address addr) public onlyOwner {
+        SbtContract = UserSBT(addr);
+    }
+
+    /**
+     * @dev See {IERC20-transfer}.
+     *
+     * Requirements:
+     *
+     * - `to` cannot be the zero address.
+     * - the caller must have a balance of at least `amount`.
+     */
+    function transfer(address to, uint256 amount) public override hasNft(to) returns (bool)  {
+        address owner = _msgSender();
+        _transfer(owner, to, amount);
+        return true;
+    }
+
+    /**
+     * @dev See {IERC20-approve}.
+     *
+     * NOTE: If `amount` is the maximum `uint256`, the allowance is not updated on
+     * `transferFrom`. This is semantically equivalent to an infinite approval.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+    function approve(address spender, uint256 amount) public override hasNft(spender) returns (bool) {
+        address owner = _msgSender();
+        _approve(owner, spender, amount);
+        return true;
+    }
+
+}
+
+contract ERC20VotesNoDelegate is ERC20CarbonDAO {
+
+    constructor(string memory name_, string memory symbol_) ERC20CarbonDAO(name_,symbol_) {
+    }
 
     /**
     * @dev The Vote structure records the voting infomation of a proposal
@@ -33,35 +95,39 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     * @param agree_amount is the voted amount for "agree"
     * @param disagree_amount is the voted amount for "disagree"
     */
-    struct Vote {
-        mapping(address => int256) voted;
-        uint128 agree_amount;
-        uint128 disagree_amount;
+    struct Proposal {
+        mapping(address => int48) voted;
+        uint48 agree_amount;
+        uint48 disagree_amount;
+        address result_executor;
     }
+
 
     /**
     * @dev All proposals
     * The mapping maps a proposal hash to a Vote structure
     */
-    mapping(bytes32 => Vote) public proposals;
+    mapping(bytes32 => Proposal) public proposals;
+    uint256 public constant passRate = 80;
 
     /**
     * @dev Vote for a proposal
     * @param proposal is the proposal hash
     * @param option is the option to vote (agree / disagree)
     */
-    function vote(bytes32 proposal, bool option) public {
-        require(uint32(proposal) > block.timestamp); // Proposal is valid for voting
-        uint256 voting_amount = getVotes(msg.sender);
+    function vote2(bytes32 proposal, bool option) public {
+        require(uint32(uint256(proposal)) > block.timestamp); // Proposal is valid for voting
+        uint48 voting_amount = uint48(getVotes(msg.sender));
         //Vote v(msg.sender, voting_power, option);
         //votes[proposal][msg.sender] = v;
-        int256 last_voted_amount = proposals[proposal].voted[msg.sender];
+        int48 last_voted_amount = proposals[proposal].voted[msg.sender];
 
+        
         // Wipe out the last vote of the sender
         if (last_voted_amount > 0) {
-            proposals[proposal].agree_amount -= last_voted_amount;
+            proposals[proposal].agree_amount -= uint48(last_voted_amount);
         } else if (last_voted_amount < 0) {
-            proposals[proposal].disagree_amount += last_voted_amount;
+            proposals[proposal].disagree_amount -= uint48(-last_voted_amount);
         }
 
         // Add the new vote
@@ -88,20 +154,34 @@ abstract contract ERC20VotesNoDelegate is ERC20CarbonDAO, IVotes {
     /**
     * @dev Gets the current votes balance for `account`
     */
-    function getVotes(address account) public view virtual override returns (uint256) {
-        return sqrt(balanceOf(account));
+    function getVotes(address account) public view returns (uint48) {
+        return uint48(sqrt(super.balanceOf(account)));
     }
 
     /**
     * @dev Add a proposal
-    * @param proposal is the hash of the proposal,
+    * @param proposal_id is the hash of the proposal,
     * which is keccak256[(32 block.timestamp) (160 executor addr) (4*8 revenue share) (bytes4(keccak256(abi.encode(executor addr)))) + url] + 32 end_time,
     * where url is the Arweave url.
     */
-    function addProposal(bytes32 proposal) public {
-        require(proposals[proposal].agree_amount == 0 && proposals[proposal].disagree_amount == 0, "Proposal already exists.");
-        Vote storage v = proposals[proposal];
-        v.voted[msg.sender] = getVotes(msg.sender);
+    function addProposal(bytes32 proposal_id, address result_executor) public {
+        require(proposals[proposal_id].result_executor == address(0x0) , "Proposal already exists.");
+        Proposal storage v = proposals[proposal_id];
+        v.voted[msg.sender] = int48(getVotes(msg.sender));
         v.agree_amount = getVotes(msg.sender);
+        v.result_executor = result_executor;
     }
+
+    function getResult(bytes32 proposal) public {
+        Proposal storage v = proposals[proposal];
+        require((v.result_executor != address(0x0)), "Proposal does not exist.");
+        uint128 agree = v.agree_amount;
+        uint128 disagree = v.disagree_amount;
+        address result_executor = v.result_executor;
+        if(100 * agree > passRate * (agree + disagree)) {
+            (bool success,) = result_executor.call(abi.encodeWithSelector(bytes4(keccak256("proposalPass()"))));
+            require(success, "Execute failed");
+        }
+    }
+
 }

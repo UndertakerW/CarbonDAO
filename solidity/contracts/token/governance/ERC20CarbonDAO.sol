@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.7.0) (token/ERC20/ERC20.sol)
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/Context.sol";
-
+import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "../nft/UserSBT.sol";
 /**
  * @dev Implementation of the {IERC20} interface.
  *
@@ -33,10 +32,13 @@ import "@openzeppelin/contracts/Context.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract ERC20CarbonDAO is ERC20Permit, Pausable {
 
-    address public SbtAddress;
+contract ERC20CarbonDAO {
+    // //address public SbtAddress;
     UserSBT public SbtContract;
+
+    // constructor(string memory name_, string memory symbol_) ERC20(name_,symbol_) {
+    // }
 
     /**
      * @dev Require the to address is valid,
@@ -47,9 +49,13 @@ contract ERC20CarbonDAO is ERC20Permit, Pausable {
         _;
     }
 
-    function setSbtAddress(address addr) onlyOwner {
-        SbtAddress = addr;
-        SbtContract = UserSBT(SbtAddress);
+    // modifier onlyUser(address sender) {
+    //     require(SbtContract.balanceOf(sender) > 0);
+    //     _;
+    // }
+
+    function setSbtAddress(address addr) public onlyOwner {
+        SbtContract = UserSBT(addr);
     }
 
     /**
@@ -60,7 +66,7 @@ contract ERC20CarbonDAO is ERC20Permit, Pausable {
      * - `to` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address to, uint256 amount) public virtual override returns (bool) whenNotPaused hasNft(to) {
+    function transfer(address to, uint256 amount) public virtual override hasNft(to) returns (bool)  {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -76,7 +82,7 @@ contract ERC20CarbonDAO is ERC20Permit, Pausable {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) whenNotPaused hasNft(to) {
+    function approve(address spender, uint256 amount) public virtual override hasNft(spender) returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
