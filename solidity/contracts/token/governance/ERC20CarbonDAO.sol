@@ -33,7 +33,7 @@ import "@openzeppelin/contracts/Context.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract ERC20CarbonDAO is ERC20, Pausable {
+contract ERC20CarbonDAO is ERC20Permit, Pausable {
 
     address public SbtAddress;
     UserSBT public SbtContract;
