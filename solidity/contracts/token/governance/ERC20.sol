@@ -57,6 +57,14 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     }
 
     /**
+     * @dev Require the owner of the contract.
+     */
+    modifier onlyContract() {
+        require(msg.sender == address(this));
+        _;
+    }
+
+    /**
      * @dev Returns the name of the token.
      */
     function name() public view virtual override returns (string memory) {
@@ -110,7 +118,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `to` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address to, uint256 amount) public virtual override returns (bool) {
+    function transfer(address to, uint256 amount) public virtual override returns (bool) onlyContract() {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -133,7 +141,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+    function approve(address spender, uint256 amount) public virtual override returns (bool) onlyContract() {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
